@@ -12,6 +12,7 @@ namespace Netler
     public class Client : IDisposable
     {
         private readonly TcpClient _tcpClient;
+        private readonly NetworkStream _stream;
 
         /// <summary>
         /// Create a new client to a localhost server listing on a given TCP port
@@ -20,6 +21,7 @@ namespace Netler
         public Client(int port)
         {
             _tcpClient = new TcpClient("localhost", port);
+            _stream = _tcpClient.GetStream();
         }
 
         /// <summary>
@@ -30,6 +32,7 @@ namespace Netler
         public Client(string hostname, int port)
         {
             _tcpClient = new TcpClient(hostname, port);
+            _stream = _tcpClient.GetStream();
         }
 
         /// <summary>
@@ -45,34 +48,30 @@ namespace Netler
             var encoded = message.Encode();
             var response = default(Response);
 
-            using (var stream = _tcpClient.GetStream())
+            _stream.Write(encoded, 0, encoded.Length);
+
+            var responseBytes = new List<byte>();
+            var buffer = new byte[256];
+
+            do
             {
-                stream.Write(encoded, 0, encoded.Length);
+                Thread.Sleep(20);
+            } while (!_stream.DataAvailable);
 
-                var responseBytes = new List<byte>();
-                var buffer = new byte[256];
-                var responseLength = 0;
-
-                do
+            if (_stream.DataAvailable && _stream.CanRead)
+            {
+                while (_stream.DataAvailable)
                 {
-                    Thread.Sleep(20);
-                } while (!stream.DataAvailable);
-
-                if (stream.DataAvailable && stream.CanRead)
-                {
-                    while (stream.DataAvailable)
-                    {
-                        responseLength = stream.Read(buffer, 0, buffer.Length);
-                        responseBytes.AddRange(buffer);
-                    }
-
-                    response = Response.Decode(responseBytes.ToArray());
-                    if (response.Status == Response.Code.Error)
-                    {
-                        throw new RemoteInvokationFailed($"Method at route {route} threw an error: {response.Data}");
-                    }
+                    _stream.Read(buffer, 0, buffer.Length);
+                    responseBytes.AddRange(buffer);
                 }
 
+                response = Response.Decode(responseBytes.ToArray());
+
+                if (response.Status == Response.Code.Error)
+                {
+                    throw new RemoteInvokationFailed($"Method at route {route} threw an error: {response.Data}");
+                }
             }
 
             return response.Data;
@@ -83,6 +82,7 @@ namespace Netler
         /// </summary>
         public void Dispose()
         {
+            _stream.Dispose();
             _tcpClient.Dispose();
         }
     }

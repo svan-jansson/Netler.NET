@@ -53,6 +53,49 @@ namespace IntegrationTests
         }
 
         [Fact]
+        public void ClientIsReusable()
+        {
+            var port = FreeTcpPort();
+
+            var server = Server
+                .Create((config) =>
+                {
+                    config.UsePort(port);
+                    config.UseRoutes((routes) =>
+                    {
+                        routes.Add("Add", (param) =>
+                        {
+                            var a = Convert.ToInt32(param[0]);
+                            var b = Convert.ToInt32(param[1]);
+                            return a + b;
+                        });
+                    });
+                });
+
+
+            var firstExected = 5;
+            var secondExected = 37;
+            int? firstActual = null;
+            int? secondActual = null;
+
+            var serverTask = server.Start();
+            var clientTask = Task.Run(() =>
+            {
+                using (var client = new Client(port))
+                {
+                    firstActual = Convert.ToInt32(client.Invoke("Add", new object[] { 2, 3 }));
+                    secondActual = Convert.ToInt32(client.Invoke("Add", new object[] { 30, 7 }));
+                }
+                server.Stop();
+            });
+
+            Task.WaitAll(serverTask, clientTask);
+
+            Assert.Equal(firstExected, firstActual);
+            Assert.Equal(secondExected, secondActual);
+        }
+
+        [Fact]
         public void ClientCatchesServerExceptions()
         {
             var port = FreeTcpPort();
