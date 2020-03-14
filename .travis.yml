@@ -1,0 +1,21 @@
+language: csharp
+dotnet: 3.1.100
+solution: Netler.sln
+
+jobs:
+  include:
+    - stage: restore
+      script:
+        - dotnet restore
+
+    - stage: test
+      script:
+        - dotnet test
+
+    - stage: deploy
+      if: branch = master AND type = push AND fork = false
+      script:
+        - cd src/Netler
+        - dotnet pack -c Release
+        - cd bin/Release
+        - dotnet nuget push *.nupkg -k $NUGET_KEY -s https://api.nuget.org/v3/index.json
