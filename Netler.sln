@@ -3,17 +3,17 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29806.167
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Netler.Server", "Netler.Server\Netler.Server.csproj", "{98BDD612-1D3A-45B8-A39B-A54543E70A63}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Netler.Server", "src\Netler.Server\Netler.Server.csproj", "{98BDD612-1D3A-45B8-A39B-A54543E70A63}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IntegrationTests", "IntegrationTests\IntegrationTests.csproj", "{0DEE5325-C86C-42BE-91AB-F4A6C721A047}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IntegrationTests", "tests\IntegrationTests\IntegrationTests.csproj", "{0DEE5325-C86C-42BE-91AB-F4A6C721A047}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0F3987D6-EE9D-47A5-9997-6DD9C5B1C92F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Netler.Client", "Netler.Client\Netler.Client.csproj", "{97B7C5F2-BC17-4CE1-9E9A-99F271488E36}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Netler.Client", "src\Netler.Client\Netler.Client.csproj", "{97B7C5F2-BC17-4CE1-9E9A-99F271488E36}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Netler.Transport", "Netler.Messages\Netler.Transport.csproj", "{BAACB72F-C177-44BF-83B8-E4E5D42BD2E1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Netler.Messages", "src\Netler.Messages\Netler.Messages.csproj", "{BAACB72F-C177-44BF-83B8-E4E5D42BD2E1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "UnitTests\UnitTests.csproj", "{1A4B36BA-0951-4DD8-9466-6571E966432B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTests", "tests\UnitTests\UnitTests.csproj", "{1A4B36BA-0951-4DD8-9466-6571E966432B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
