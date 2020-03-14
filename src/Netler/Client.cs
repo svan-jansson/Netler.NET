@@ -11,13 +11,16 @@ namespace Netler
     /// </summary>
     public class Client : IDisposable
     {
-        readonly TcpClient _tcpClient;
+        private readonly TcpClient _tcpClient;
 
         /// <summary>
         /// Create a new client to a localhost server listing on a given TCP port
         /// </summary>
         /// <param name="port">A valid TCP port</param>
-        public Client(int port) => new Client("localhost", port);
+        public Client(int port)
+        {
+            _tcpClient = new TcpClient("localhost", port);
+        }
 
         /// <summary>
         /// Create a new client to a named server listing on a given TCP port
