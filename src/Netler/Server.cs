@@ -1,6 +1,7 @@
 ﻿using Netler.Contracts;
 using Netler.Exceptions;
 using System;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -56,19 +57,28 @@ namespace Netler
         {
             var port = _configuration.GetPort();
             var routes = _configuration.GetRoutes();
+            var clientPid = _configuration.GetClientPid();
 
             var localhost = IPAddress.Parse("127.0.0.1");
             var listener = new TcpListener(localhost, port);
+
+            if (clientPid != null)
+            {
+                StartCheckIfClientIsAlive(
+                    listener,
+                    (int)clientPid,
+                    (ClientDisconnectBehaviour)_configuration.GetClientDisconnectBehaviour());
+            }
 
             listener.Start();
             var client = listener.AcceptTcpClient();
             var stream = client.GetStream();
 
-            while (!_cancellationToken.IsCancellationRequested)
+            while (!_cancellationSource.IsCancellationRequested)
             {
                 if (!stream.DataAvailable)
                 {
-                    Tick();
+                    Tick(1);
                 }
                 else
                 {
@@ -97,7 +107,47 @@ namespace Netler
             return this;
         }
 
-        private void Tick() => Task.Delay(1).GetAwaiter().GetResult();
+        private void Tick(int ms) => Task.Delay(ms).GetAwaiter().GetResult();
+
+        private void StartCheckIfClientIsAlive(TcpListener listener, int clientPid, ClientDisconnectBehaviour behaviour)
+            => Task.Run(() =>
+            {
+                while (!_cancellationSource.IsCancellationRequested && ClientIsAlive(clientPid))
+                {
+                    Tick(500);
+                }
+
+                if (_cancellationSource.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                switch (behaviour)
+                {
+                    case ClientDisconnectBehaviour.ShutdownApplication:
+                        Stop();
+                        Environment.Exit(0);
+                        break;
+                    case ClientDisconnectBehaviour.DisposeServer:
+                        Stop();
+                        break;
+                    case ClientDisconnectBehaviour.KeepAlive:
+                        break;
+                }
+            });
+
+        private bool ClientIsAlive(int clientPid)
+        {
+            try
+            {
+                var process = Process.GetProcessById(clientPid);
+                return !process.HasExited;
+            }
+            catch
+            {
+                return false;
+            }
+        }
 
     }
 }

@@ -17,4 +17,13 @@
     <ProjectReference Include="..\..\src\Netler\Netler.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="sleep.cmd">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="sleep.sh">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
