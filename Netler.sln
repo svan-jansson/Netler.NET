@@ -16,6 +16,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.travis.yml = .travis.yml
 		DOCS.md = DOCS.md
 		LICENSE = LICENSE
+		logo\netler.svg.png = logo\netler.svg.png
 		README.md = README.md
 	EndProjectSection
 EndProject

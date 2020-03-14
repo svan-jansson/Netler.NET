@@ -8,7 +8,7 @@
     <Authors>Svan Jansson</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/svan-jansson/Netler.NET</RepositoryUrl>
-    <Description>Server and Client for cross-process method calls over TCP</Description>
+    <Description>A library for cross-process method calls over TCP. For instance for calling .NET methods from Elixir (see https://hexdocs.pm/netler/). The library also contains a simple client that can be used to call a Netler server from another .NET application.</Description>
     <PackageLicenseFile></PackageLicenseFile>
     <PackageIcon>netler.svg.png</PackageIcon>
     <PackageIconUrl />
