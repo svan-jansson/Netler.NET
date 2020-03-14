@@ -8,10 +8,10 @@ namespace Netler.Exceptions
     [Serializable]
     public class RemoteInvokationFailed : Exception
     {
-        public RemoteInvokationFailed() : base() { }
+        /// <summary>
+        /// Creates a new instance of the exception with a message describing the details of the error
+        /// </summary>
+        /// <param name="message">A message describing the error</param>
         public RemoteInvokationFailed(string message) : base(message) { }
-        public RemoteInvokationFailed(string message, Exception inner) : base(message, inner) { }
-        protected RemoteInvokationFailed(System.Runtime.Serialization.SerializationInfo info,
-            System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
 }

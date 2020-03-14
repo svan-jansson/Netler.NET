@@ -8,10 +8,11 @@ namespace Netler.Exceptions
     [Serializable()]
     public class RouteMethodCallFailed : Exception
     {
-        public RouteMethodCallFailed() : base() { }
-        public RouteMethodCallFailed(string message) : base(message) { }
+        /// <summary>
+        /// Creates a new instance of the exception with a message describing the details of the error
+        /// </summary>
+        /// <param name="message">A message describing the error</param>
+        /// <param name="inner">An inner exception containing details of the caught error</param>
         public RouteMethodCallFailed(string message, Exception inner) : base(message, inner) { }
-        protected RouteMethodCallFailed(System.Runtime.Serialization.SerializationInfo info,
-            System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
 }

@@ -14,7 +14,7 @@ namespace Netler
     /// </summary>
     public class Server
     {
-        private IConfiguration _configuration;
+        private readonly IConfiguration _configuration;
         private CancellationTokenSource _cancellationSource;
         private CancellationToken _cancellationToken;
 
@@ -26,7 +26,7 @@ namespace Netler
         /// <summary>
         /// Creates new Netler Server instance
         /// </summary>
-        /// <param name="port">Which port the server will listen to</param>
+        /// <param name="configure">Callback for configuring the server instance</param>
         public static Server Create(Action<IConfiguration> configure)
         {
             var server = new Server();
@@ -64,8 +64,7 @@ namespace Netler
 
             if (clientPid != null)
             {
-                StartCheckIfClientIsAlive(
-                    listener,
+                StartCheckingIfClientIsAlive(
                     (int)clientPid,
                     (ClientDisconnectBehaviour)_configuration.GetClientDisconnectBehaviour());
             }
@@ -109,7 +108,7 @@ namespace Netler
 
         private void Tick(int ms) => Task.Delay(ms).GetAwaiter().GetResult();
 
-        private void StartCheckIfClientIsAlive(TcpListener listener, int clientPid, ClientDisconnectBehaviour behaviour)
+        private void StartCheckingIfClientIsAlive(int clientPid, ClientDisconnectBehaviour behaviour)
             => Task.Run(() =>
             {
                 while (!_cancellationSource.IsCancellationRequested && ClientIsAlive(clientPid))

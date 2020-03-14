@@ -85,6 +85,7 @@ namespace IntegrationTests
         }
 
         [Fact(Skip = "CI")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "xUnit1004:Test methods should not be skipped", Justification = "Cannot get Travis CI to run this test")]
         public void ServerCanListenToClientProcessStatus()
         {
             var port = FreeTcpPort();
@@ -101,10 +102,7 @@ namespace IntegrationTests
             var serverTask = server.Start();
             var clientTask = Task.Run(() =>
             {
-                using (var client = new Client(port))
-                {
-
-                }
+                using var client = new Client(port);
             });
 
             Task.WaitAll(serverTask, clientTask);

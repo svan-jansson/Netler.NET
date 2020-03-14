@@ -11,11 +11,22 @@ namespace Netler
     /// </summary>
     public class Client : IDisposable
     {
-        TcpClient _tcpClient;
+        readonly TcpClient _tcpClient;
 
-        public Client(int port)
+        /// <summary>
+        /// Create a new client to a localhost server listing on a given TCP port
+        /// </summary>
+        /// <param name="port">A valid TCP port</param>
+        public Client(int port) => new Client("localhost", port);
+
+        /// <summary>
+        /// Create a new client to a named server listing on a given TCP port
+        /// </summary>
+        /// <param name="port">A valid TCP port</param>
+        /// <param name="hostname">A valid hostname</param>
+        public Client(string hostname, int port)
         {
-            _tcpClient = new TcpClient("localhost", port);
+            _tcpClient = new TcpClient(hostname, port);
         }
 
         /// <summary>
@@ -64,6 +75,9 @@ namespace Netler
             return response.Data;
         }
 
+        /// <summary>
+        /// <inheritdoc cref="IDisposable.Dispose"/>
+        /// </summary>
         public void Dispose()
         {
             _tcpClient.Dispose();
