@@ -2,8 +2,6 @@ language: csharp
 dotnet: 3.1.100
 solution: Netler.sln
 
-sudo: enabled
-
 jobs:
   include:
     - stage: restore
