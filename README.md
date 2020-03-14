@@ -9,7 +9,11 @@
 
 A library for cross-process method calls over TCP. For instance for calling .NET methods from Elixir (see [https://hexdocs.pm/netler/](https://hexdocs.pm/netler/)). The library also contains a simple client that can be used to call a Netler server from another .NET application.
 
-## Code Example
+## Documentation
+
+Auto generated documentation is available here: [DOCS.md](DOCS.md)
+
+## Code Examples
 
 ### Creating a Server That Exposes a Method
 
