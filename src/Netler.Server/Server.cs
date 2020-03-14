@@ -36,13 +36,11 @@ namespace Netler
         /// <summary>
         /// Starts a process running the Netler Server
         /// </summary>
-        public Task<Server> StartAsync()
+        public Task<Server> Start()
         {
             _cancellationSource = new CancellationTokenSource();
             _cancellationToken = _cancellationSource.Token;
-            var server = Task.Run(StartServer, _cancellationToken);
-
-            return server;
+            return Task.Run(StartServer, _cancellationToken);
         }
 
         /// <summary>
@@ -70,7 +68,7 @@ namespace Netler
             {
                 if (!stream.DataAvailable)
                 {
-                    Task.Delay(1).GetAwaiter().GetResult();
+                    Tick();
                 }
                 else
                 {
@@ -98,5 +96,8 @@ namespace Netler
             listener.Stop();
             return this;
         }
+
+        private void Tick() => Task.Delay(1).GetAwaiter().GetResult();
+
     }
 }

@@ -14,8 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Netler.Client\Netler.Client.csproj" />
-    <ProjectReference Include="..\..\src\Netler.Server\Netler.Server.csproj" />
+    <ProjectReference Include="..\..\src\Netler.Server\Netler.csproj" />
   </ItemGroup>
 
 </Project>

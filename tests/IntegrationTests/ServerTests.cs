@@ -32,7 +32,7 @@ namespace IntegrationTests
             var expected = 5;
             int? actual = null;
 
-            var serverTask = server.StartAsync();
+            var serverTask = server.Start();
             var clientTask = Task.Run(() =>
             {
                 using (var client = new Client(Port))
@@ -66,7 +66,7 @@ namespace IntegrationTests
                 });
 
 
-            var serverTask = server.StartAsync();
+            var serverTask = server.Start();
             var clientTask = Task.Run(() =>
             {
                 using (var client = new Client(Port))
