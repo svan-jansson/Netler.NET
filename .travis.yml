@@ -5,6 +5,7 @@ solution: Netler.sln
 jobs:
   include:
     - stage: test
+      if: tag IS blank
       script:
         - dotnet restore
         - dotnet test
