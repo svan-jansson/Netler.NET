@@ -53,6 +53,7 @@ using Netler;
 
 using (var client = new Client(5544))
 {
-    var result = Convert.ToInt32(client.Invoke("Add", new object[] { 2, 3 })); // Should return 5
+    var response = client.Invoke("Add", new object[] { 2, 3 });
+    var responseAsInt = Convert.ToInt32(response); // The response is 5
 }
 ```
