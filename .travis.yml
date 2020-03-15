@@ -4,12 +4,9 @@ solution: Netler.sln
 
 jobs:
   include:
-    - stage: restore
-      script:
-        - dotnet restore
-
     - stage: test
       script:
+        - dotnet restore
         - dotnet test
 
     - stage: deploy
@@ -19,3 +16,6 @@ jobs:
         - dotnet pack -c Release
         - cd bin/Release
         - dotnet nuget push *.nupkg -k $NUGET_KEY -s https://api.nuget.org/v3/index.json
+        - cd $TRAVIS_BUILD_DIR
+        - git tag -a v1.$TRAVIS_BUILD_NUMBER.0 -m v1.$TRAVIS_BUILD_NUMBER.0
+        - git push --tags
