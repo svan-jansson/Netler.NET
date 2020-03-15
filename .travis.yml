@@ -17,5 +17,8 @@ jobs:
         - cd bin/Release
         - dotnet nuget push *.nupkg -k $NUGET_KEY -s https://api.nuget.org/v3/index.json
         - cd $TRAVIS_BUILD_DIR
+        - git config --global user.email "svan.jansson@gmail.com"
+        - git config --global user.name "svan-jansson"
+        - git remote set-url origin https://svan-jansson:$GITHUB_TOKEN@github.com/svan-jansson/Netler.NET.git
         - git tag -a v1.$TRAVIS_BUILD_NUMBER.0 -m v1.$TRAVIS_BUILD_NUMBER.0
         - git push --tags
