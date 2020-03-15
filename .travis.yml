@@ -13,7 +13,7 @@ jobs:
         - dotnet test
 
     - stage: deploy
-      if: branch = master AND type = push AND fork = false
+      if: branch = master AND type = push AND fork = false AND tag IS blank
       script:
         - cd src/Netler
         - dotnet pack -c Release
