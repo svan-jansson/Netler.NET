@@ -1,6 +1,5 @@
 ﻿using Netler.Exceptions;
 using System;
-using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Threading;
 
@@ -44,14 +43,9 @@ namespace Netler
         public object Invoke(string route, object[] parameters)
         {
             var message = new Request(route, parameters);
-
-            var encoded = message.Encode();
             var response = default(Response);
 
-            _stream.Write(encoded, 0, encoded.Length);
-
-            var responseBytes = new List<byte>();
-            var buffer = new byte[256];
+            _stream.WriteWithHeader(message.Encode());
 
             do
             {
@@ -60,13 +54,8 @@ namespace Netler
 
             if (_stream.DataAvailable && _stream.CanRead)
             {
-                while (_stream.DataAvailable)
-                {
-                    _stream.Read(buffer, 0, buffer.Length);
-                    responseBytes.AddRange(buffer);
-                }
-
-                response = Response.Decode(responseBytes.ToArray());
+                var encodedResponse = _stream.ReadWithHeader();
+                response = Response.Decode(encodedResponse);
 
                 if (response.Status == Response.Code.Error)
                 {

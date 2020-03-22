@@ -1,6 +1,7 @@
 using Netler;
 using Netler.Exceptions;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
@@ -50,6 +51,53 @@ namespace IntegrationTests
             Task.WaitAll(serverTask, clientTask);
 
             Assert.Equal(expected, actual);
+        }
+
+        [Fact]
+        public void LargeContent()
+        {
+            var port = FreeTcpPort();
+
+            var server = Server
+                .Create((config) =>
+                {
+                    config.UsePort(port);
+                    config.UseRoutes((routes) =>
+                    {
+                        routes.Add("Large", (param) =>
+                        {
+                            var size = Convert.ToInt32(param[0]);
+                            var payload = new List<object>();
+                            for (var i = 0; i < size; i++)
+                            {
+                                payload.Add(new
+                                {
+                                    Index = i,
+                                    Value = "This is a string"
+                                });
+                            }
+                            return payload;
+                        });
+                    });
+                });
+
+
+            var expectedSize = 10_000;
+            object[] actual = null;
+
+            var serverTask = server.Start();
+            var clientTask = Task.Run(() =>
+            {
+                using (var client = new Client(port))
+                {
+                    actual = client.Invoke("Large", new object[] { expectedSize }) as object[];
+                }
+                server.Stop();
+            });
+
+            Task.WaitAll(serverTask, clientTask);
+
+            Assert.Equal(expectedSize, actual.Length);
         }
 
         [Fact]

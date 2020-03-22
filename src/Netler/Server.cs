@@ -81,23 +81,20 @@ namespace Netler
                 }
                 else
                 {
-                    var encodedRequest = new byte[client.Available];
-                    stream.Read(encodedRequest, 0, encodedRequest.Length);
 
+                    var encodedRequest = stream.ReadWithHeader();
                     var request = Request.Decode(encodedRequest);
 
                     try
                     {
                         var methodResponse = routes.Invoke(request.Route, request.Parameters);
                         var response = new Response(Response.Code.Ok, methodResponse);
-                        var responseBytes = response.Encode();
-                        stream.Write(responseBytes, 0, responseBytes.Length);
+                        stream.WriteWithHeader(response.Encode());
                     }
                     catch (RouteMethodCallFailed ex)
                     {
                         var response = new Response(Response.Code.Error, ex.InnerException.Message);
-                        var responseBytes = response.Encode();
-                        stream.Write(responseBytes, 0, responseBytes.Length);
+                        stream.WriteWithHeader(response.Encode());
                     }
                 }
             }
