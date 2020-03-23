@@ -7,7 +7,7 @@
 
 # Netler.NET
 
-A library for cross-process method calls over TCP. For instance for calling .NET methods from Elixir (see [https://hexdocs.pm/netler/](https://hexdocs.pm/netler/)). The library also contains a simple client that can be used to call a Netler server from another .NET application.
+A library for cross-process method calls over TCP. For instance for calling .NET methods from Elixir (see [https://hexdocs.pm/netler/](https://hexdocs.pm/netler/)). All messages are serialized using the fast and light [MessagePack](https://msgpack.org) binary format. The library also includes a client that can be used to call a Netler server from another .NET application.
 
 ## Documentation
 
