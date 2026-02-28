@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Netler.Contracts;
 using System;
 
@@ -12,6 +14,7 @@ namespace Netler
         private int? _clientPid;
         private ClientDisconnectBehaviour? _clientDisconnectBehaviour;
         private IRoutes _routes;
+        private ILogger _logger = NullLogger.Instance;
 
         public void UseClientPid(int pid)
         {
@@ -35,6 +38,11 @@ namespace Netler
             routes(_routes);
         }
 
+        public void UseLogger(ILogger logger)
+        {
+            _logger = logger ?? NullLogger.Instance;
+        }
+
         public int GetPort() => _port;
 
         public int? GetClientPid() => _clientPid;
@@ -42,5 +50,7 @@ namespace Netler
         public ClientDisconnectBehaviour? GetClientDisconnectBehaviour() => _clientDisconnectBehaviour;
 
         public IRoutes GetRoutes() => _routes;
+
+        public ILogger GetLogger() => _logger;
     }
 }

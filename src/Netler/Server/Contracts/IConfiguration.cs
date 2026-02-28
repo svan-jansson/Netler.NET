@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using System;
 
 namespace Netler.Contracts
@@ -30,6 +31,12 @@ namespace Netler.Contracts
         void UseRoutes(Action<IRoutes> routes);
 
         /// <summary>
+        /// Configures an <see cref="ILogger"/> for the server to write diagnostic messages to.
+        /// Defaults to <see cref="Microsoft.Extensions.Logging.Abstractions.NullLogger"/> when not set.
+        /// </summary>
+        void UseLogger(ILogger logger);
+
+        /// <summary>
         /// The currently configured client disconnect behaviour
         /// </summary>
         ClientDisconnectBehaviour? GetClientDisconnectBehaviour();
@@ -49,5 +56,9 @@ namespace Netler.Contracts
         /// </summary>
         int? GetClientPid();
 
+        /// <summary>
+        /// The currently configured logger
+        /// </summary>
+        ILogger GetLogger();
     }
 }

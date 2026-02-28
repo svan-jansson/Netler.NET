@@ -15,7 +15,7 @@ namespace IntegrationTests
     public class ServerTests
     {
         [Fact]
-        public void ClientServerCommunication()
+        public async Task ClientServerCommunication()
         {
             var port = FreeTcpPort();
 
@@ -39,22 +39,22 @@ namespace IntegrationTests
             int? actual = null;
 
             var serverTask = server.Start();
-            var clientTask = Task.Run(() =>
+            var clientTask = Task.Run(async () =>
             {
                 using (var client = new Client(port))
                 {
-                    actual = Convert.ToInt32(client.Invoke("Add", new object[] { 2, 3 }));
+                    actual = Convert.ToInt32(await client.InvokeAsync("Add", new object[] { 2, 3 }));
                 }
                 server.Stop();
             });
 
-            Task.WaitAll(serverTask, clientTask);
+            await Task.WhenAll(serverTask, clientTask);
 
             Assert.Equal(expected, actual);
         }
 
-        [Fact]
-        public void LargeContent()
+        [Fact(Timeout = 10_000)]
+        public async Task LargeContent()
         {
             var port = FreeTcpPort();
 
@@ -86,22 +86,22 @@ namespace IntegrationTests
             object[] actual = null;
 
             var serverTask = server.Start();
-            var clientTask = Task.Run(() =>
+            var clientTask = Task.Run(async () =>
             {
                 using (var client = new Client(port))
                 {
-                    actual = client.Invoke("Large", new object[] { expectedSize }) as object[];
+                    actual = await client.InvokeAsync("Large", new object[] { expectedSize }) as object[];
                 }
                 server.Stop();
             });
 
-            Task.WaitAll(serverTask, clientTask);
+            await Task.WhenAll(serverTask, clientTask);
 
             Assert.Equal(expectedSize, actual.Length);
         }
 
         [Fact]
-        public void ClientIsReusable()
+        public async Task ClientIsReusable()
         {
             var port = FreeTcpPort();
 
@@ -127,24 +127,24 @@ namespace IntegrationTests
             int? secondActual = null;
 
             var serverTask = server.Start();
-            var clientTask = Task.Run(() =>
+            var clientTask = Task.Run(async () =>
             {
                 using (var client = new Client(port))
                 {
-                    firstActual = Convert.ToInt32(client.Invoke("Add", new object[] { 2, 3 }));
-                    secondActual = Convert.ToInt32(client.Invoke("Add", new object[] { 30, 7 }));
+                    firstActual = Convert.ToInt32(await client.InvokeAsync("Add", new object[] { 2, 3 }));
+                    secondActual = Convert.ToInt32(await client.InvokeAsync("Add", new object[] { 30, 7 }));
                 }
                 server.Stop();
             });
 
-            Task.WaitAll(serverTask, clientTask);
+            await Task.WhenAll(serverTask, clientTask);
 
             Assert.Equal(firstExected, firstActual);
             Assert.Equal(secondExected, secondActual);
         }
 
         [Fact]
-        public void ClientCatchesServerExceptions()
+        public async Task ClientCatchesServerExceptions()
         {
             var port = FreeTcpPort();
 
@@ -163,21 +163,21 @@ namespace IntegrationTests
 
 
             var serverTask = server.Start();
-            var clientTask = Task.Run(() =>
+            var clientTask = Task.Run(async () =>
             {
                 using (var client = new Client(port))
                 {
-                    Assert.Throws<RemoteInvokationFailed>(() => { client.Invoke("Add", new object[] { 2, 3 }); });
+                    await Assert.ThrowsAsync<RemoteInvokationFailed>(() => client.InvokeAsync("Add", new object[] { 2, 3 }));
                 }
                 server.Stop();
             });
 
-            Task.WaitAll(serverTask, clientTask);
+            await Task.WhenAll(serverTask, clientTask);
         }
 
         [Fact(Skip = "CI")]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "xUnit1004:Test methods should not be skipped", Justification = "Cannot get Travis CI to run this test")]
-        public void ServerCanListenToClientProcessStatus()
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "xUnit1004:Test methods should not be skipped", Justification = "Cannot be reliably run in CI environment")]
+        public async Task ServerCanListenToClientProcessStatus()
         {
             var port = FreeTcpPort();
             var clientPid = StartProcessThatRunsFiveSeconds();
@@ -191,12 +191,13 @@ namespace IntegrationTests
                 });
 
             var serverTask = server.Start();
-            var clientTask = Task.Run(() =>
+            var clientTask = Task.Run(async () =>
             {
                 using var client = new Client(port);
+                await Task.CompletedTask;
             });
 
-            Task.WaitAll(serverTask, clientTask);
+            await Task.WhenAll(serverTask, clientTask);
 
             Assert.True(true);
         }

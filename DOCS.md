@@ -8,6 +8,7 @@
   - [#ctor(port,hostname)](#M-Netler-Client-#ctor-System-String,System-Int32- 'Netler.Client.#ctor(System.String,System.Int32)')
   - [Dispose()](#M-Netler-Client-Dispose 'Netler.Client.Dispose')
   - [Invoke(route,parameters)](#M-Netler-Client-Invoke-System-String,System-Object[]- 'Netler.Client.Invoke(System.String,System.Object[])')
+  - [InvokeAsync(route,parameters,cancellationToken)](#M-Netler-Client-InvokeAsync-System-String,System-Object[],System-Threading-CancellationToken- 'Netler.Client.InvokeAsync(System.String,System.Object[],System.Threading.CancellationToken)')
 - [ClientDisconnectBehaviour](#T-Netler-Contracts-ClientDisconnectBehaviour 'Netler.Contracts.ClientDisconnectBehaviour')
   - [DisposeServer](#F-Netler-Contracts-ClientDisconnectBehaviour-DisposeServer 'Netler.Contracts.ClientDisconnectBehaviour.DisposeServer')
   - [KeepAlive](#F-Netler-Contracts-ClientDisconnectBehaviour-KeepAlive 'Netler.Contracts.ClientDisconnectBehaviour.KeepAlive')
@@ -23,6 +24,7 @@
   - [GetRoutes()](#M-Netler-Contracts-IConfiguration-GetRoutes 'Netler.Contracts.IConfiguration.GetRoutes')
   - [UseClientDisconnectBehaviour()](#M-Netler-Contracts-IConfiguration-UseClientDisconnectBehaviour-Netler-Contracts-ClientDisconnectBehaviour- 'Netler.Contracts.IConfiguration.UseClientDisconnectBehaviour(Netler.Contracts.ClientDisconnectBehaviour)')
   - [UseClientPid()](#M-Netler-Contracts-IConfiguration-UseClientPid-System-Int32- 'Netler.Contracts.IConfiguration.UseClientPid(System.Int32)')
+  - [UseLogger(logger)](#M-Netler-Contracts-IConfiguration-UseLogger-Microsoft-Extensions-Logging-ILogger- 'Netler.Contracts.IConfiguration.UseLogger(Microsoft.Extensions.Logging.ILogger)')
   - [UsePort()](#M-Netler-Contracts-IConfiguration-UsePort-System-Int32- 'Netler.Contracts.IConfiguration.UsePort(System.Int32)')
   - [UseRoutes(routes)](#M-Netler-Contracts-IConfiguration-UseRoutes-System-Action{Netler-Contracts-IRoutes}- 'Netler.Contracts.IConfiguration.UseRoutes(System.Action{Netler.Contracts.IRoutes})')
 - [IRoutes](#T-Netler-Contracts-IRoutes 'Netler.Contracts.IRoutes')
@@ -67,7 +69,7 @@
   - [Invoke(route,parameters)](#M-Netler-Routes-Invoke-System-String,System-Object[]- 'Netler.Routes.Invoke(System.String,System.Object[])')
 - [Server](#T-Netler-Server 'Netler.Server')
   - [Create(configure)](#M-Netler-Server-Create-System-Action{Netler-Contracts-IConfiguration}- 'Netler.Server.Create(System.Action{Netler.Contracts.IConfiguration})')
-  - [Start()](#M-Netler-Server-Start 'Netler.Server.Start')
+  - [Start(cancellationToken)](#M-Netler-Server-Start-System-Threading-CancellationToken- 'Netler.Server.Start(System.Threading.CancellationToken)')
   - [Stop()](#M-Netler-Server-Stop 'Netler.Server.Stop')
 
 <a name='T-Netler-Client'></a>
@@ -136,6 +138,25 @@ Invokes a method on the Netler server using its route
 | ---- | ---- | ----------- |
 | route | [System.String](http://msdn.microsoft.com/query/dev14.query?appId=Dev14IDEF1&l=EN-US&k=k:System.String 'System.String') | The name of the route |
 | parameters | [System.Object[]](http://msdn.microsoft.com/query/dev14.query?appId=Dev14IDEF1&l=EN-US&k=k:System.Object[] 'System.Object[]') | The parameters to pass to the method |
+
+<a name='M-Netler-Client-InvokeAsync-System-String,System-Object[],System-Threading-CancellationToken-'></a>
+### InvokeAsync(route,parameters,cancellationToken) `method`
+
+##### Summary
+
+Asynchronously invokes a method on the Netler server using its route
+
+##### Returns
+
+The return value of the remote method
+
+##### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| route | [System.String](http://msdn.microsoft.com/query/dev14.query?appId=Dev14IDEF1&l=EN-US&k=k:System.String 'System.String') | The name of the route |
+| parameters | [System.Object[]](http://msdn.microsoft.com/query/dev14.query?appId=Dev14IDEF1&l=EN-US&k=k:System.Object[] 'System.Object[]') | The parameters to pass to the method |
+| cancellationToken | [System.Threading.CancellationToken](http://msdn.microsoft.com/query/dev14.query?appId=Dev14IDEF1&l=EN-US&k=k:System.Threading.CancellationToken 'System.Threading.CancellationToken') | Token to cancel the operation |
 
 <a name='T-Netler-Contracts-ClientDisconnectBehaviour'></a>
 ## ClientDisconnectBehaviour `type`
@@ -282,6 +303,19 @@ By passing a client OS pid the Netler Server will automatically shut down when t
 ##### Parameters
 
 This method has no parameters.
+
+<a name='M-Netler-Contracts-IConfiguration-UseLogger-Microsoft-Extensions-Logging-ILogger-'></a>
+### UseLogger(logger) `method`
+
+##### Summary
+
+Configures an `ILogger` for the server to write diagnostic messages to. Defaults to `NullLogger` when not set.
+
+##### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| logger | Microsoft.Extensions.Logging.ILogger | The logger instance |
 
 <a name='M-Netler-Contracts-IConfiguration-UsePort-System-Int32-'></a>
 ### UsePort() `method`
@@ -824,16 +858,18 @@ Creates new Netler Server instance
 | ---- | ---- | ----------- |
 | configure | [System.Action{Netler.Contracts.IConfiguration}](http://msdn.microsoft.com/query/dev14.query?appId=Dev14IDEF1&l=EN-US&k=k:System.Action 'System.Action{Netler.Contracts.IConfiguration}') | Callback for configuring the server instance |
 
-<a name='M-Netler-Server-Start'></a>
-### Start() `method`
+<a name='M-Netler-Server-Start-System-Threading-CancellationToken-'></a>
+### Start(cancellationToken) `method`
 
 ##### Summary
 
-Starts a process running the Netler Server
+Starts the Netler Server
 
 ##### Parameters
 
-This method has no parameters.
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| cancellationToken | [System.Threading.CancellationToken](http://msdn.microsoft.com/query/dev14.query?appId=Dev14IDEF1&l=EN-US&k=k:System.Threading.CancellationToken 'System.Threading.CancellationToken') | Token to cancel the server (optional) |
 
 <a name='M-Netler-Server-Stop'></a>
 ### Stop() `method`

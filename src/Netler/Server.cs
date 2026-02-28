@@ -1,4 +1,5 @@
-﻿using Netler.Contracts;
+using Microsoft.Extensions.Logging;
+using Netler.Contracts;
 using Netler.Exceptions;
 using System;
 using System.Diagnostics;
@@ -16,7 +17,6 @@ namespace Netler
     {
         private readonly IConfiguration _configuration;
         private CancellationTokenSource _cancellationSource;
-        private CancellationToken _cancellationToken;
 
         private Server()
         {
@@ -35,13 +35,13 @@ namespace Netler
         }
 
         /// <summary>
-        /// Starts a process running the Netler Server
+        /// Starts the Netler Server
         /// </summary>
-        public Task<Server> Start()
+        /// <param name="cancellationToken">Token to cancel the server</param>
+        public Task<Server> Start(CancellationToken cancellationToken = default)
         {
-            _cancellationSource = new CancellationTokenSource();
-            _cancellationToken = _cancellationSource.Token;
-            return Task.Run(StartServer, _cancellationToken);
+            _cancellationSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            return Task.Run(() => StartServerAsync(_cancellationSource.Token), _cancellationSource.Token);
         }
 
         /// <summary>
@@ -49,74 +49,104 @@ namespace Netler
         /// </summary>
         public Server Stop()
         {
-            _cancellationSource.Cancel();
+            _cancellationSource?.Cancel();
             return this;
         }
 
-        private Server StartServer()
+        private async Task<Server> StartServerAsync(CancellationToken ct)
         {
             var port = _configuration.GetPort();
             var routes = _configuration.GetRoutes();
             var clientPid = _configuration.GetClientPid();
+            var logger = _configuration.GetLogger();
 
-            var localhost = IPAddress.Parse("127.0.0.1");
-            var listener = new TcpListener(localhost, port);
+            var listener = new TcpListener(IPAddress.Loopback, port);
+            listener.Start();
+            ct.Register(() => listener.Stop());
+
+            logger.LogInformation("Netler server listening on port {Port}", port);
 
             if (clientPid != null)
             {
                 StartCheckingIfClientIsAlive(
                     (int)clientPid,
-                    (ClientDisconnectBehaviour)_configuration.GetClientDisconnectBehaviour());
+                    (ClientDisconnectBehaviour)_configuration.GetClientDisconnectBehaviour(),
+                    ct,
+                    logger);
             }
 
-            listener.Start();
-            var client = listener.AcceptTcpClient();
-            var stream = client.GetStream();
-
-            while (!_cancellationSource.IsCancellationRequested)
+            TcpClient tcpClient;
+            try
             {
-                if (!stream.DataAvailable)
-                {
-                    Tick(1);
-                }
-                else
-                {
+                tcpClient = await listener.AcceptTcpClientAsync();
+            }
+            catch (SocketException) when (ct.IsCancellationRequested)
+            {
+                logger.LogInformation("Netler server stopped before accepting a connection");
+                return this;
+            }
 
-                    var encodedRequest = stream.ReadWithHeader();
-                    var request = Request.Decode(encodedRequest);
+            logger.LogInformation("Client connected");
 
+            using (tcpClient)
+            {
+                var stream = tcpClient.GetStream();
+
+                while (!ct.IsCancellationRequested)
+                {
                     try
                     {
-                        var methodResponse = routes.Invoke(request.Route, request.Parameters);
-                        var response = new Response(Response.Code.Ok, methodResponse);
-                        stream.WriteWithHeader(response.Encode());
+                        var encodedRequest = await stream.ReadWithHeaderAsync(ct);
+                        var request = Request.Decode(encodedRequest);
+
+                        logger.LogDebug("Received request for route {Route}", request.Route);
+
+                        try
+                        {
+                            var methodResponse = routes.Invoke(request.Route, request.Parameters);
+                            var response = new Response(Response.Code.Ok, methodResponse);
+                            await stream.WriteWithHeaderAsync(response.Encode(), ct);
+                        }
+                        catch (RouteMethodCallFailed ex)
+                        {
+                            logger.LogError(ex, "Route {Route} threw an exception", request.Route);
+                            var response = new Response(Response.Code.Error, ex.InnerException.Message);
+                            await stream.WriteWithHeaderAsync(response.Encode(), ct);
+                        }
                     }
-                    catch (RouteMethodCallFailed ex)
+                    catch (OperationCanceledException)
                     {
-                        var response = new Response(Response.Code.Error, ex.InnerException.Message);
-                        stream.WriteWithHeader(response.Encode());
+                        break;
+                    }
+                    catch (System.IO.EndOfStreamException)
+                    {
+                        // Client closed the connection
+                        break;
+                    }
+                    catch (Exception ex) when (!ct.IsCancellationRequested)
+                    {
+                        logger.LogError(ex, "Unexpected error in server loop");
+                        break;
                     }
                 }
             }
 
-            listener.Stop();
+            logger.LogInformation("Netler server stopped");
             return this;
         }
 
-        private void Tick(int ms) => Task.Delay(ms).GetAwaiter().GetResult();
-
-        private void StartCheckingIfClientIsAlive(int clientPid, ClientDisconnectBehaviour behaviour)
-            => Task.Run(() =>
+        private void StartCheckingIfClientIsAlive(int clientPid, ClientDisconnectBehaviour behaviour, CancellationToken ct, ILogger logger)
+            => Task.Run(async () =>
             {
-                while (!_cancellationSource.IsCancellationRequested && ClientIsAlive(clientPid))
+                while (!ct.IsCancellationRequested && ClientIsAlive(clientPid))
                 {
-                    Tick(500);
+                    try { await Task.Delay(500, ct); }
+                    catch (OperationCanceledException) { return; }
                 }
 
-                if (_cancellationSource.IsCancellationRequested)
-                {
-                    return;
-                }
+                if (ct.IsCancellationRequested) return;
+
+                logger.LogInformation("Client process {Pid} has disconnected. Behaviour: {Behaviour}", clientPid, behaviour);
 
                 switch (behaviour)
                 {
@@ -130,7 +160,7 @@ namespace Netler
                     case ClientDisconnectBehaviour.KeepAlive:
                         break;
                 }
-            });
+            }, ct);
 
         private bool ClientIsAlive(int clientPid)
         {
@@ -144,6 +174,5 @@ namespace Netler
                 return false;
             }
         }
-
     }
 }

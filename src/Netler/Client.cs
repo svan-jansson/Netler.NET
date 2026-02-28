@@ -1,7 +1,8 @@
-﻿using Netler.Exceptions;
+using Netler.Exceptions;
 using System;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Netler
 {
@@ -61,6 +62,28 @@ namespace Netler
                 {
                     throw new RemoteInvokationFailed($"Method at route {route} threw an error: {response.Data}");
                 }
+            }
+
+            return response.Data;
+        }
+
+        /// <summary>
+        /// Asynchronously invokes a method on the Netler server using its route
+        /// </summary>
+        /// <param name="route">The name of the route</param>
+        /// <param name="parameters">The parameters to pass to the method</param>
+        /// <param name="cancellationToken">Token to cancel the operation</param>
+        /// <returns>The return value of the remote method</returns>
+        public async Task<object> InvokeAsync(string route, object[] parameters, CancellationToken cancellationToken = default)
+        {
+            var message = new Request(route, parameters);
+            await _stream.WriteWithHeaderAsync(message.Encode(), cancellationToken);
+            var encodedResponse = await _stream.ReadWithHeaderAsync(cancellationToken);
+            var response = Response.Decode(encodedResponse);
+
+            if (response.Status == Response.Code.Error)
+            {
+                throw new RemoteInvokationFailed($"Method at route {route} threw an error: {response.Data}");
             }
 
             return response.Data;
