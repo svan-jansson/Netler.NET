@@ -27,19 +27,57 @@ namespace Netler
 
         /// <summary>Wraps a one-parameter function.</summary>
         public static Func<object[], object> Decode<T1, TResult>(Func<T1, TResult> fn)
-            => p => fn(TypedConvert.To<T1>(p[0]));
+            => p => fn(
+                TypedConvert.To<T1>(p[0]));
 
         /// <summary>Wraps a two-parameter function.</summary>
         public static Func<object[], object> Decode<T1, T2, TResult>(Func<T1, T2, TResult> fn)
-            => p => fn(TypedConvert.To<T1>(p[0]), TypedConvert.To<T2>(p[1]));
+            => p => fn(
+                TypedConvert.To<T1>(p[0]), TypedConvert.To<T2>(p[1]));
 
         /// <summary>Wraps a three-parameter function.</summary>
         public static Func<object[], object> Decode<T1, T2, T3, TResult>(Func<T1, T2, T3, TResult> fn)
-            => p => fn(TypedConvert.To<T1>(p[0]), TypedConvert.To<T2>(p[1]), TypedConvert.To<T3>(p[2]));
+            => p => fn(
+                TypedConvert.To<T1>(p[0]), TypedConvert.To<T2>(p[1]), TypedConvert.To<T3>(p[2]));
 
         /// <summary>Wraps a four-parameter function.</summary>
         public static Func<object[], object> Decode<T1, T2, T3, T4, TResult>(Func<T1, T2, T3, T4, TResult> fn)
-            => p => fn(TypedConvert.To<T1>(p[0]), TypedConvert.To<T2>(p[1]), TypedConvert.To<T3>(p[2]), TypedConvert.To<T4>(p[3]));
+            => p => fn(
+                TypedConvert.To<T1>(p[0]), TypedConvert.To<T2>(p[1]), TypedConvert.To<T3>(p[2]),
+                TypedConvert.To<T4>(p[3]));
+
+        /// <summary>Wraps a five-parameter function.</summary>
+        public static Func<object[], object> Decode<T1, T2, T3, T4, T5, TResult>(Func<T1, T2, T3, T4, T5, TResult> fn)
+            => p => fn(
+                TypedConvert.To<T1>(p[0]), TypedConvert.To<T2>(p[1]), TypedConvert.To<T3>(p[2]),
+                TypedConvert.To<T4>(p[3]), TypedConvert.To<T5>(p[4]));
+
+        /// <summary>Wraps a six-parameter function.</summary>
+        public static Func<object[], object> Decode<T1, T2, T3, T4, T5, T6, TResult>(Func<T1, T2, T3, T4, T5, T6, TResult> fn)
+            => p => fn(
+                TypedConvert.To<T1>(p[0]), TypedConvert.To<T2>(p[1]), TypedConvert.To<T3>(p[2]),
+                TypedConvert.To<T4>(p[3]), TypedConvert.To<T5>(p[4]), TypedConvert.To<T6>(p[5]));
+
+        /// <summary>Wraps a seven-parameter function.</summary>
+        public static Func<object[], object> Decode<T1, T2, T3, T4, T5, T6, T7, TResult>(Func<T1, T2, T3, T4, T5, T6, T7, TResult> fn)
+            => p => fn(
+                TypedConvert.To<T1>(p[0]), TypedConvert.To<T2>(p[1]), TypedConvert.To<T3>(p[2]),
+                TypedConvert.To<T4>(p[3]), TypedConvert.To<T5>(p[4]), TypedConvert.To<T6>(p[5]),
+                TypedConvert.To<T7>(p[6]));
+
+        /// <summary>Wraps an eight-parameter function.</summary>
+        public static Func<object[], object> Decode<T1, T2, T3, T4, T5, T6, T7, T8, TResult>(Func<T1, T2, T3, T4, T5, T6, T7, T8, TResult> fn)
+            => p => fn(
+                TypedConvert.To<T1>(p[0]), TypedConvert.To<T2>(p[1]), TypedConvert.To<T3>(p[2]),
+                TypedConvert.To<T4>(p[3]), TypedConvert.To<T5>(p[4]), TypedConvert.To<T6>(p[5]),
+                TypedConvert.To<T7>(p[6]), TypedConvert.To<T8>(p[7]));
+
+        /// <summary>Wraps a nine-parameter function.</summary>
+        public static Func<object[], object> Decode<T1, T2, T3, T4, T5, T6, T7, T8, T9, TResult>(Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, TResult> fn)
+            => p => fn(
+                TypedConvert.To<T1>(p[0]), TypedConvert.To<T2>(p[1]), TypedConvert.To<T3>(p[2]),
+                TypedConvert.To<T4>(p[3]), TypedConvert.To<T5>(p[4]), TypedConvert.To<T6>(p[5]),
+                TypedConvert.To<T7>(p[6]), TypedConvert.To<T8>(p[7]), TypedConvert.To<T9>(p[8]));
 
         // ── Action overloads (void, route returns null) ───────────────────────
 
@@ -61,6 +99,35 @@ namespace Netler
 
         /// <summary>Wraps a four-parameter void action.</summary>
         public static Func<object[], object> Decode<T1, T2, T3, T4>(Action<T1, T2, T3, T4> fn)
-            => p => { fn(TypedConvert.To<T1>(p[0]), TypedConvert.To<T2>(p[1]), TypedConvert.To<T3>(p[2]), TypedConvert.To<T4>(p[3])); return null; };
+            => p => { fn(TypedConvert.To<T1>(p[0]), TypedConvert.To<T2>(p[1]), TypedConvert.To<T3>(p[2]),
+                TypedConvert.To<T4>(p[3])); return null; };
+
+        /// <summary>Wraps a five-parameter void action.</summary>
+        public static Func<object[], object> Decode<T1, T2, T3, T4, T5>(Action<T1, T2, T3, T4, T5> fn)
+            => p => { fn(TypedConvert.To<T1>(p[0]), TypedConvert.To<T2>(p[1]), TypedConvert.To<T3>(p[2]),
+                TypedConvert.To<T4>(p[3]), TypedConvert.To<T5>(p[4])); return null; };
+
+        /// <summary>Wraps a six-parameter void action.</summary>
+        public static Func<object[], object> Decode<T1, T2, T3, T4, T5, T6>(Action<T1, T2, T3, T4, T5, T6> fn)
+            => p => { fn(TypedConvert.To<T1>(p[0]), TypedConvert.To<T2>(p[1]), TypedConvert.To<T3>(p[2]),
+                TypedConvert.To<T4>(p[3]), TypedConvert.To<T5>(p[4]), TypedConvert.To<T6>(p[5])); return null; };
+
+        /// <summary>Wraps a seven-parameter void action.</summary>
+        public static Func<object[], object> Decode<T1, T2, T3, T4, T5, T6, T7>(Action<T1, T2, T3, T4, T5, T6, T7> fn)
+            => p => { fn(TypedConvert.To<T1>(p[0]), TypedConvert.To<T2>(p[1]), TypedConvert.To<T3>(p[2]),
+                TypedConvert.To<T4>(p[3]), TypedConvert.To<T5>(p[4]), TypedConvert.To<T6>(p[5]),
+                TypedConvert.To<T7>(p[6])); return null; };
+
+        /// <summary>Wraps an eight-parameter void action.</summary>
+        public static Func<object[], object> Decode<T1, T2, T3, T4, T5, T6, T7, T8>(Action<T1, T2, T3, T4, T5, T6, T7, T8> fn)
+            => p => { fn(TypedConvert.To<T1>(p[0]), TypedConvert.To<T2>(p[1]), TypedConvert.To<T3>(p[2]),
+                TypedConvert.To<T4>(p[3]), TypedConvert.To<T5>(p[4]), TypedConvert.To<T6>(p[5]),
+                TypedConvert.To<T7>(p[6]), TypedConvert.To<T8>(p[7])); return null; };
+
+        /// <summary>Wraps a nine-parameter void action.</summary>
+        public static Func<object[], object> Decode<T1, T2, T3, T4, T5, T6, T7, T8, T9>(Action<T1, T2, T3, T4, T5, T6, T7, T8, T9> fn)
+            => p => { fn(TypedConvert.To<T1>(p[0]), TypedConvert.To<T2>(p[1]), TypedConvert.To<T3>(p[2]),
+                TypedConvert.To<T4>(p[3]), TypedConvert.To<T5>(p[4]), TypedConvert.To<T6>(p[5]),
+                TypedConvert.To<T7>(p[6]), TypedConvert.To<T8>(p[7]), TypedConvert.To<T9>(p[8])); return null; };
     }
 }

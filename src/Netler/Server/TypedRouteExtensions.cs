@@ -40,6 +40,26 @@ namespace Netler.Contracts
         public static void AddTyped<T1, T2, T3, T4, TResult>(this IRoutes routes, string route, Func<T1, T2, T3, T4, TResult> fn)
             => routes.Add(route, Params.Decode(fn));
 
+        /// <summary>Adds a typed route with a five-parameter handler.</summary>
+        public static void AddTyped<T1, T2, T3, T4, T5, TResult>(this IRoutes routes, string route, Func<T1, T2, T3, T4, T5, TResult> fn)
+            => routes.Add(route, Params.Decode(fn));
+
+        /// <summary>Adds a typed route with a six-parameter handler.</summary>
+        public static void AddTyped<T1, T2, T3, T4, T5, T6, TResult>(this IRoutes routes, string route, Func<T1, T2, T3, T4, T5, T6, TResult> fn)
+            => routes.Add(route, Params.Decode(fn));
+
+        /// <summary>Adds a typed route with a seven-parameter handler.</summary>
+        public static void AddTyped<T1, T2, T3, T4, T5, T6, T7, TResult>(this IRoutes routes, string route, Func<T1, T2, T3, T4, T5, T6, T7, TResult> fn)
+            => routes.Add(route, Params.Decode(fn));
+
+        /// <summary>Adds a typed route with an eight-parameter handler.</summary>
+        public static void AddTyped<T1, T2, T3, T4, T5, T6, T7, T8, TResult>(this IRoutes routes, string route, Func<T1, T2, T3, T4, T5, T6, T7, T8, TResult> fn)
+            => routes.Add(route, Params.Decode(fn));
+
+        /// <summary>Adds a typed route with a nine-parameter handler.</summary>
+        public static void AddTyped<T1, T2, T3, T4, T5, T6, T7, T8, T9, TResult>(this IRoutes routes, string route, Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, TResult> fn)
+            => routes.Add(route, Params.Decode(fn));
+
         // ── Action overloads (void return) ───────────────────────────────────
 
         /// <summary>Adds a typed route with a zero-parameter void handler.</summary>
@@ -60,6 +80,26 @@ namespace Netler.Contracts
 
         /// <summary>Adds a typed route with a four-parameter void handler.</summary>
         public static void AddTyped<T1, T2, T3, T4>(this IRoutes routes, string route, Action<T1, T2, T3, T4> fn)
+            => routes.Add(route, Params.Decode(fn));
+
+        /// <summary>Adds a typed route with a five-parameter void handler.</summary>
+        public static void AddTyped<T1, T2, T3, T4, T5>(this IRoutes routes, string route, Action<T1, T2, T3, T4, T5> fn)
+            => routes.Add(route, Params.Decode(fn));
+
+        /// <summary>Adds a typed route with a six-parameter void handler.</summary>
+        public static void AddTyped<T1, T2, T3, T4, T5, T6>(this IRoutes routes, string route, Action<T1, T2, T3, T4, T5, T6> fn)
+            => routes.Add(route, Params.Decode(fn));
+
+        /// <summary>Adds a typed route with a seven-parameter void handler.</summary>
+        public static void AddTyped<T1, T2, T3, T4, T5, T6, T7>(this IRoutes routes, string route, Action<T1, T2, T3, T4, T5, T6, T7> fn)
+            => routes.Add(route, Params.Decode(fn));
+
+        /// <summary>Adds a typed route with an eight-parameter void handler.</summary>
+        public static void AddTyped<T1, T2, T3, T4, T5, T6, T7, T8>(this IRoutes routes, string route, Action<T1, T2, T3, T4, T5, T6, T7, T8> fn)
+            => routes.Add(route, Params.Decode(fn));
+
+        /// <summary>Adds a typed route with a nine-parameter void handler.</summary>
+        public static void AddTyped<T1, T2, T3, T4, T5, T6, T7, T8, T9>(this IRoutes routes, string route, Action<T1, T2, T3, T4, T5, T6, T7, T8, T9> fn)
             => routes.Add(route, Params.Decode(fn));
     }
 }
