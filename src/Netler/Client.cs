@@ -90,6 +90,20 @@ namespace Netler
         }
 
         /// <summary>
+        /// Asynchronously invokes a method on the Netler server using its route and deserialises the result to <typeparamref name="T"/>
+        /// </summary>
+        /// <typeparam name="T">The expected return type</typeparam>
+        /// <param name="route">The name of the route</param>
+        /// <param name="parameters">The parameters to pass to the method</param>
+        /// <param name="cancellationToken">Token to cancel the operation</param>
+        /// <returns>The typed return value of the remote method</returns>
+        public async Task<T> InvokeAsync<T>(string route, object[] parameters, CancellationToken cancellationToken = default)
+        {
+            var raw = await InvokeAsync(route, parameters, cancellationToken);
+            return TypedConvert.To<T>(raw);
+        }
+
+        /// <summary>
         /// <inheritdoc cref="IDisposable.Dispose"/>
         /// </summary>
         public void Dispose()

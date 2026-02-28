@@ -9,6 +9,11 @@
   - [Dispose()](#M-Netler-Client-Dispose 'Netler.Client.Dispose')
   - [Invoke(route,parameters)](#M-Netler-Client-Invoke-System-String,System-Object[]- 'Netler.Client.Invoke(System.String,System.Object[])')
   - [InvokeAsync(route,parameters,cancellationToken)](#M-Netler-Client-InvokeAsync-System-String,System-Object[],System-Threading-CancellationToken- 'Netler.Client.InvokeAsync(System.String,System.Object[],System.Threading.CancellationToken)')
+  - [InvokeAsync\`\`1(route,parameters,cancellationToken)](#M-Netler-Client-InvokeAsync``1-System-String,System-Object[],System-Threading-CancellationToken- 'Netler.Client.InvokeAsync``1(System.String,System.Object[],System.Threading.CancellationToken)')
+- [Params](#T-Netler-Params 'Netler.Params')
+  - [Decode overloads (Func/Action, 0–4 params)](#M-Netler-Params-Decode 'Netler.Params.Decode')
+- [TypedRouteExtensions](#T-Netler-Contracts-TypedRouteExtensions 'Netler.Contracts.TypedRouteExtensions')
+  - [AddTyped overloads (Func/Action, 0–4 params)](#M-Netler-Contracts-TypedRouteExtensions-AddTyped 'Netler.Contracts.TypedRouteExtensions.AddTyped')
 - [ClientDisconnectBehaviour](#T-Netler-Contracts-ClientDisconnectBehaviour 'Netler.Contracts.ClientDisconnectBehaviour')
   - [DisposeServer](#F-Netler-Contracts-ClientDisconnectBehaviour-DisposeServer 'Netler.Contracts.ClientDisconnectBehaviour.DisposeServer')
   - [KeepAlive](#F-Netler-Contracts-ClientDisconnectBehaviour-KeepAlive 'Netler.Contracts.ClientDisconnectBehaviour.KeepAlive')
@@ -138,6 +143,31 @@ Invokes a method on the Netler server using its route
 | ---- | ---- | ----------- |
 | route | [System.String](http://msdn.microsoft.com/query/dev14.query?appId=Dev14IDEF1&l=EN-US&k=k:System.String 'System.String') | The name of the route |
 | parameters | [System.Object[]](http://msdn.microsoft.com/query/dev14.query?appId=Dev14IDEF1&l=EN-US&k=k:System.Object[] 'System.Object[]') | The parameters to pass to the method |
+
+<a name='M-Netler-Client-InvokeAsync``1-System-String,System-Object[],System-Threading-CancellationToken-'></a>
+### InvokeAsync\`\`1(route,parameters,cancellationToken) `method`
+
+##### Summary
+
+Asynchronously invokes a method on the Netler server and deserialises the result to the requested type
+
+##### Returns
+
+The typed return value of the remote method
+
+##### Parameters
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| route | [System.String](http://msdn.microsoft.com/query/dev14.query?appId=Dev14IDEF1&l=EN-US&k=k:System.String 'System.String') | The name of the route |
+| parameters | [System.Object[]](http://msdn.microsoft.com/query/dev14.query?appId=Dev14IDEF1&l=EN-US&k=k:System.Object[] 'System.Object[]') | The parameters to pass to the method |
+| cancellationToken | [System.Threading.CancellationToken](http://msdn.microsoft.com/query/dev14.query?appId=Dev14IDEF1&l=EN-US&k=k:System.Threading.CancellationToken 'System.Threading.CancellationToken') | Token to cancel the operation |
+
+##### Generic Types
+
+| Name | Description |
+| ---- | ----------- |
+| T | The expected return type. Primitives are coerced via `Convert.ChangeType`; complex types must be annotated with `[MessagePackObject]`. |
 
 <a name='M-Netler-Client-InvokeAsync-System-String,System-Object[],System-Threading-CancellationToken-'></a>
 ### InvokeAsync(route,parameters,cancellationToken) `method`
@@ -340,6 +370,47 @@ Which routes the Netler Server should expose
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | routes | [System.Action{Netler.Contracts.IRoutes}](http://msdn.microsoft.com/query/dev14.query?appId=Dev14IDEF1&l=EN-US&k=k:System.Action 'System.Action{Netler.Contracts.IRoutes}') | A mapping of string routes to methods that are executed when the route is called |
+
+<a name='T-Netler-Params'></a>
+## Params `type`
+
+##### Namespace
+
+Netler
+
+##### Summary
+
+Functional composition helper that wraps a typed delegate into the `Func<object[], object>` signature expected by `IRoutes.Add`. Each `Decode` overload returns the adapter function directly, so it composes cleanly at the point of route registration. Parameter decoding uses a three-step strategy: direct cast → `Convert.ChangeType` (primitive coercion) → MessagePack round-trip (for complex types with `[MessagePackObject]`).
+
+##### Example
+
+```csharp
+routes.Add("Add",    Params.Decode<int, int, int>((a, b) => a + b));
+routes.Add("Double", Params.Decode<int, int>(x => x * 2));
+routes.Add("Ping",   Params.Decode<string>(() => "pong"));
+routes.Add("Log",    Params.Decode<string>(msg => { /* void */ }));
+routes.Add("Create", Params.Decode<CreateRequest, CreateResponse>(req => new CreateResponse { Id = 1 }));
+```
+
+<a name='M-Netler-Params-Decode'></a>
+### Decode overloads `method`
+
+##### Summary
+
+Returns a `Func<object[], object>` that decodes the raw MessagePack parameter array, calls the provided typed delegate, and returns the result boxed as `object` (or `null` for `Action` overloads). Overloads exist for 0–4 parameters and for both `Func<…, TResult>` (returns a value) and `Action<…>` (void) delegates.
+
+| Signature | Description |
+|---|---|
+| `Decode<TResult>(Func<TResult>)` | 0 params, returns value |
+| `Decode<T1, TResult>(Func<T1, TResult>)` | 1 param, returns value |
+| `Decode<T1, T2, TResult>(Func<T1, T2, TResult>)` | 2 params, returns value |
+| `Decode<T1, T2, T3, TResult>(Func<T1, T2, T3, TResult>)` | 3 params, returns value |
+| `Decode<T1, T2, T3, T4, TResult>(Func<T1, T2, T3, T4, TResult>)` | 4 params, returns value |
+| `Decode(Action)` | 0 params, void |
+| `Decode<T1>(Action<T1>)` | 1 param, void |
+| `Decode<T1, T2>(Action<T1, T2>)` | 2 params, void |
+| `Decode<T1, T2, T3>(Action<T1, T2, T3>)` | 3 params, void |
+| `Decode<T1, T2, T3, T4>(Action<T1, T2, T3, T4>)` | 4 params, void |
 
 <a name='T-Netler-Contracts-IRoutes'></a>
 ## IRoutes `type`

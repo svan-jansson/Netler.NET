@@ -1,4 +1,6 @@
+using MessagePack;
 using Netler;
+using Netler.Contracts;
 using Netler.Exceptions;
 using System;
 using System.Collections.Generic;
@@ -200,6 +202,126 @@ namespace IntegrationTests
             await Task.WhenAll(serverTask, clientTask);
 
             Assert.True(true);
+        }
+
+        [Fact]
+        public async Task AddTyped_Primitives()
+        {
+            var port = FreeTcpPort();
+
+            var server = Server
+                .Create((config) =>
+                {
+                    config.UsePort(port);
+                    config.UseRoutes((routes) =>
+                    {
+                        routes.AddTyped("Add",    (int a, int b) => a + b);
+                        routes.AddTyped("Double", (int x) => x * 2);
+                        routes.AddTyped("Ping",   () => "pong");
+                    });
+                });
+
+            int? sum = null;
+            int? doubled = null;
+            string ping = null;
+
+            var serverTask = server.Start();
+            var clientTask = Task.Run(async () =>
+            {
+                using (var client = new Client(port))
+                {
+                    sum     = await client.InvokeAsync<int>("Add",    new object[] { 3, 4 });
+                    doubled = await client.InvokeAsync<int>("Double", new object[] { 6 });
+                    ping    = await client.InvokeAsync<string>("Ping", new object[] { });
+                }
+                server.Stop();
+            });
+
+            await Task.WhenAll(serverTask, clientTask);
+
+            Assert.Equal(7, sum);
+            Assert.Equal(12, doubled);
+            Assert.Equal("pong", ping);
+        }
+
+        [Fact]
+        public async Task AddTyped_VoidAction()
+        {
+            var port = FreeTcpPort();
+            var logged = string.Empty;
+
+            var server = Server
+                .Create((config) =>
+                {
+                    config.UsePort(port);
+                    config.UseRoutes((routes) =>
+                    {
+                        routes.AddTyped("Log", (string msg) => { logged = msg; });
+                    });
+                });
+
+            var serverTask = server.Start();
+            var clientTask = Task.Run(async () =>
+            {
+                using (var client = new Client(port))
+                {
+                    await client.InvokeAsync("Log", new object[] { "hello" });
+                }
+                server.Stop();
+            });
+
+            await Task.WhenAll(serverTask, clientTask);
+
+            Assert.Equal("hello", logged);
+        }
+
+        [Fact]
+        public async Task AddTyped_MessagePackObject()
+        {
+            var port = FreeTcpPort();
+
+            var server = Server
+                .Create((config) =>
+                {
+                    config.UsePort(port);
+                    config.UseRoutes((routes) =>
+                    {
+                        routes.AddTyped("Echo", (EchoRequest req) =>
+                            new EchoResponse { Message = req.Text, Length = req.Text.Length });
+                    });
+                });
+
+            EchoResponse actual = null;
+
+            var serverTask = server.Start();
+            var clientTask = Task.Run(async () =>
+            {
+                using (var client = new Client(port))
+                {
+                    var request = new EchoRequest { Text = "netler" };
+                    actual = await client.InvokeAsync<EchoResponse>("Echo", new object[] { request });
+                }
+                server.Stop();
+            });
+
+            await Task.WhenAll(serverTask, clientTask);
+
+            Assert.NotNull(actual);
+            Assert.Equal("netler", actual.Message);
+            Assert.Equal(6, actual.Length);
+        }
+
+        [MessagePackObject]
+        public class EchoRequest
+        {
+            [Key(0)] public string Text { get; set; }
+        }
+
+        [MessagePackObject]
+        public class EchoResponse
+        {
+            [Key(0)] public string Message { get; set; }
+            [Key(1)] public int Length { get; set; }
         }
 
         private int StartProcessThatRunsFiveSeconds()
