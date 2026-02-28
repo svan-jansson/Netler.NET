@@ -13,7 +13,7 @@ namespace Netler
     /// <summary>
     /// A Netler Server listens to incoming TCP requests and translates them into method calls
     /// </summary>
-    public class Server
+    public partial class Server
     {
         private readonly IConfiguration _configuration;
         private CancellationTokenSource _cancellationSource;
@@ -62,9 +62,8 @@ namespace Netler
 
             var listener = new TcpListener(IPAddress.Loopback, port);
             listener.Start();
-            ct.Register(() => listener.Stop());
 
-            logger.LogInformation("Netler server listening on port {Port}", port);
+            LogListening(logger, port);
 
             if (clientPid != null)
             {
@@ -78,75 +77,86 @@ namespace Netler
             TcpClient tcpClient;
             try
             {
-                tcpClient = await listener.AcceptTcpClientAsync();
+#if NET6_0_OR_GREATER
+                tcpClient = await listener.AcceptTcpClientAsync(ct).ConfigureAwait(false);
+#else
+                // Optimization: dispose the registration once AcceptTcpClientAsync returns
+                // so the CT callback cannot fire after the listener is already in use.
+                using var registration = ct.Register(() => listener.Stop());
+                tcpClient = await listener.AcceptTcpClientAsync().ConfigureAwait(false);
+#endif
             }
             catch (SocketException) when (ct.IsCancellationRequested)
             {
-                logger.LogInformation("Netler server stopped before accepting a connection");
+                LogStoppedBeforeConnect(logger);
+                return this;
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                LogStoppedBeforeConnect(logger);
                 return this;
             }
 
-            logger.LogInformation("Client connected");
+            LogClientConnected(logger);
 
-            using (tcpClient)
+            using var client = tcpClient;
+            var stream = client.GetStream();
+
+            while (!ct.IsCancellationRequested)
             {
-                var stream = tcpClient.GetStream();
-
-                while (!ct.IsCancellationRequested)
+                try
                 {
+                    var encodedRequest = await stream.ReadWithHeaderAsync(ct).ConfigureAwait(false);
+                    var request = Request.Decode(encodedRequest);
+
+                    LogRequest(logger, request.Route);
+
                     try
                     {
-                        var encodedRequest = await stream.ReadWithHeaderAsync(ct);
-                        var request = Request.Decode(encodedRequest);
-
-                        logger.LogDebug("Received request for route {Route}", request.Route);
-
-                        try
-                        {
-                            var methodResponse = routes.Invoke(request.Route, request.Parameters);
-                            var response = new Response(Response.Code.Ok, methodResponse);
-                            await stream.WriteWithHeaderAsync(response.Encode(), ct);
-                        }
-                        catch (RouteMethodCallFailed ex)
-                        {
-                            logger.LogError(ex, "Route {Route} threw an exception", request.Route);
-                            var response = new Response(Response.Code.Error, ex.InnerException.Message);
-                            await stream.WriteWithHeaderAsync(response.Encode(), ct);
-                        }
+                        var methodResponse = routes.Invoke(request.Route, request.Parameters);
+                        var response = new Response(Response.Code.Ok, methodResponse);
+                        await stream.WriteWithHeaderAsync(response.Encode(), ct).ConfigureAwait(false);
                     }
-                    catch (OperationCanceledException)
+                    catch (RouteMethodCallFailed ex)
                     {
-                        break;
+                        LogRouteError(logger, ex, request.Route);
+                        var response = new Response(Response.Code.Error, ex.InnerException.Message);
+                        await stream.WriteWithHeaderAsync(response.Encode(), ct).ConfigureAwait(false);
                     }
-                    catch (System.IO.EndOfStreamException)
-                    {
-                        // Client closed the connection
-                        break;
-                    }
-                    catch (Exception ex) when (!ct.IsCancellationRequested)
-                    {
-                        logger.LogError(ex, "Unexpected error in server loop");
-                        break;
-                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+                catch (System.IO.EndOfStreamException)
+                {
+                    // Client closed the connection
+                    break;
+                }
+                catch (Exception ex) when (!ct.IsCancellationRequested)
+                {
+                    LogUnexpectedError(logger, ex);
+                    break;
                 }
             }
 
-            logger.LogInformation("Netler server stopped");
+            LogServerStopped(logger);
             return this;
         }
 
         private void StartCheckingIfClientIsAlive(int clientPid, ClientDisconnectBehaviour behaviour, CancellationToken ct, ILogger logger)
-            => Task.Run(async () =>
+        {
+            _ = Task.Run(async () =>
             {
                 while (!ct.IsCancellationRequested && ClientIsAlive(clientPid))
                 {
-                    try { await Task.Delay(500, ct); }
+                    try { await Task.Delay(500, ct).ConfigureAwait(false); }
                     catch (OperationCanceledException) { return; }
                 }
 
                 if (ct.IsCancellationRequested) return;
 
-                logger.LogInformation("Client process {Pid} has disconnected. Behaviour: {Behaviour}", clientPid, behaviour);
+                LogClientDisconnected(logger, clientPid, behaviour);
 
                 switch (behaviour)
                 {
@@ -161,6 +171,7 @@ namespace Netler
                         break;
                 }
             }, ct);
+        }
 
         private bool ClientIsAlive(int clientPid)
         {
@@ -174,5 +185,33 @@ namespace Netler
                 return false;
             }
         }
+
+        // ── [LoggerMessage] source-generated log delegates ───────────────────────
+        // Pre-compiled at build time by the Microsoft.Extensions.Logging.Abstractions
+        // source generator — no runtime string-format parsing, no argument boxing.
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Netler server listening on port {Port}")]
+        private static partial void LogListening(ILogger logger, int port);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Netler server stopped before accepting a connection")]
+        private static partial void LogStoppedBeforeConnect(ILogger logger);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Client connected")]
+        private static partial void LogClientConnected(ILogger logger);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Received request for route {Route}")]
+        private static partial void LogRequest(ILogger logger, string route);
+
+        [LoggerMessage(Level = LogLevel.Error, Message = "Route {Route} threw an exception")]
+        private static partial void LogRouteError(ILogger logger, Exception exception, string route);
+
+        [LoggerMessage(Level = LogLevel.Error, Message = "Unexpected error in server loop")]
+        private static partial void LogUnexpectedError(ILogger logger, Exception exception);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Netler server stopped")]
+        private static partial void LogServerStopped(ILogger logger);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Client process {Pid} has disconnected. Behaviour: {Behaviour}")]
+        private static partial void LogClientDisconnected(ILogger logger, int pid, ClientDisconnectBehaviour behaviour);
     }
 }
