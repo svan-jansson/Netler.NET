@@ -1,36 +1,20 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <PackageId>Netler.NET</PackageId>
-    <Version Condition="'$(TRAVIS_BUILD_NUMBER)' != ''">1.$(TRAVIS_BUILD_NUMBER)</Version>
-    <Version Condition="'$(TRAVIS_BUILD_NUMBER)' == ''">1.0</Version>
     <Authors>Svan Jansson</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/svan-jansson/Netler.NET</RepositoryUrl>
     <Description>A library for cross-process method calls over TCP. For instance for calling .NET methods from Elixir (see https://hexdocs.pm/netler/). The library also contains a simple client that can be used to call a Netler server from another .NET application.</Description>
-    <PackageLicenseFile></PackageLicenseFile>
     <PackageIcon>netler.svg.png</PackageIcon>
-    <PackageIconUrl />
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageReleaseNotes Condition="Exists('$(MSBuildProjectDirectory)\..\..\release-notes.txt')">$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)\..\..\release-notes.txt"))</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MessagePack" Version="2.1.90" />
-  </ItemGroup>
-  
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DocumentationFile>..\..\DOCS.xml</DocumentationFile>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-      <DocumentationMarkdown>..\..\DOCS.md</DocumentationMarkdown>
-  </PropertyGroup>
-
-  <ItemGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <PackageReference Include="Vsxmd" Version="1.4.5">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <PackageReference Include="MessagePack" Version="2.5.192" />
+    <PackageReference Include="Nerdbank.GitVersioning" Version="3.*" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
