@@ -11,8 +11,23 @@ using System.Threading.Tasks;
 namespace Netler
 {
     /// <summary>
-    /// A Netler Server listens to incoming TCP requests and translates them into method calls
+    /// A Netler Server listens to incoming TCP requests and translates them into method calls.
     /// </summary>
+    /// <example>
+    /// <code>
+    /// var server = Server.Create(config =>
+    /// {
+    ///     config.UsePort(5544);
+    ///     config.UseRoutes(routes =>
+    ///     {
+    ///         routes.AddTyped("Add", (int a, int b) => a + b);
+    ///         routes.AddTyped("Ping", () => "pong");
+    ///     });
+    /// });
+    ///
+    /// await server.Start();
+    /// </code>
+    /// </example>
     public partial class Server
     {
         private readonly IConfiguration _configuration;
@@ -24,9 +39,24 @@ namespace Netler
         }
 
         /// <summary>
-        /// Creates new Netler Server instance
+        /// Creates a new Netler Server instance with the provided configuration.
         /// </summary>
-        /// <param name="configure">Callback for configuring the server instance</param>
+        /// <param name="configure">A callback that configures the server (port, routes, logger, etc.).</param>
+        /// <returns>A configured <see cref="Server"/> instance, ready to be started.</returns>
+        /// <example>
+        /// <code>
+        /// var server = Server.Create(config =>
+        /// {
+        ///     config.UsePort(5544);
+        ///     config.UseRoutes(routes =>
+        ///     {
+        ///         routes.AddTyped("Add",    (int a, int b) => a + b);
+        ///         routes.AddTyped("Double", (int x) => x * 2);
+        ///         routes.AddTyped("Ping",   () => "pong");
+        ///     });
+        /// });
+        /// </code>
+        /// </example>
         public static Server Create(Action<IConfiguration> configure)
         {
             var server = new Server();
@@ -35,9 +65,26 @@ namespace Netler
         }
 
         /// <summary>
-        /// Starts the Netler Server
+        /// Starts the Netler Server and blocks until <see cref="Stop"/> is called or the
+        /// <paramref name="cancellationToken"/> is signalled.
         /// </summary>
-        /// <param name="cancellationToken">Token to cancel the server</param>
+        /// <param name="cancellationToken">
+        /// An optional token that cancels the server loop. When cancelled the server stops
+        /// accepting new connections and returns.
+        /// </param>
+        /// <returns>A <see cref="Task{Server}"/> that completes when the server stops, yielding this instance.</returns>
+        /// <example>
+        /// <code>
+        /// // Fire-and-forget — stop later via server.Stop()
+        /// var serverTask = server.Start();
+        ///
+        /// // Or cancel via a token
+        /// using var cts = new CancellationTokenSource();
+        /// var serverTask = server.Start(cts.Token);
+        /// cts.CancelAfter(TimeSpan.FromMinutes(5));
+        /// await serverTask;
+        /// </code>
+        /// </example>
         public Task<Server> Start(CancellationToken cancellationToken = default)
         {
             _cancellationSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -45,8 +92,18 @@ namespace Netler
         }
 
         /// <summary>
-        /// Stops the Netler Server
+        /// Stops the Netler Server. Any in-flight request will be allowed to complete before
+        /// the server loop exits.
         /// </summary>
+        /// <returns>This <see cref="Server"/> instance, enabling a fluent call chain.</returns>
+        /// <example>
+        /// <code>
+        /// var serverTask = server.Start();
+        /// // ... do work ...
+        /// server.Stop();
+        /// await serverTask;
+        /// </code>
+        /// </example>
         public Server Stop()
         {
             _cancellationSource?.Cancel();
