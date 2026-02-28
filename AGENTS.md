@@ -8,6 +8,10 @@ Guidelines for AI agents (Copilot, Claude, etc.) contributing to Netler.NET.
 
 ```
 Netler.sln                        — Solution root
+mise.toml                         — Tool versions (dotnet 10)
+version.json                      — Nerdbank.GitVersioning config (version 2.0, branch: master)
+.github/workflows/
+  build-test-publish.yml          — CI: build, test, pack, publish to NuGet, create GitHub release
 src/
   Netler/
     Server.cs                     — TCP server with fluent builder API
@@ -23,7 +27,7 @@ tests/
   IntegrationTests/
     ServerTests.cs                — Full server↔client TCP round-trip tests
     sleep.sh / sleep.cmd          — Helper scripts used by integration tests
-DOCS.md                           — Auto-generated from XML doc comments
+DOCS.md                           — Hand-maintained API documentation
 ```
 
 ---
@@ -78,5 +82,5 @@ dotnet pack src/Netler/Netler.csproj -c Release
 ## Commit & PR Guidelines
 
 - Use present-tense imperative voice: `Add route parameter validation`, `Fix null reference in response parser`
-- Use `[skip ci]` only for documentation-only commits (e.g. README/DOCS updates)
+- Use `[skip ci]` in the commit message only for documentation-only commits (e.g. README/DOCS updates) — GitHub Actions respects this convention
 - PR descriptions should explain the change and reference which tests cover it
