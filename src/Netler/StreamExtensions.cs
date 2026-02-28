@@ -9,6 +9,7 @@ namespace Netler
     internal static class StreamExtensions
     {
         const int HeaderSize = 4;
+        const int MaxFrameSize = 256 * 1024 * 1024; // 256 MB — guard against malformed or malicious frames
 
         internal static byte[] ReadWithHeader(this NetworkStream stream)
         {
@@ -16,6 +17,8 @@ namespace Netler
             ReadExactly(stream, header, HeaderSize);
             Array.Reverse(header);
             var contentLength = BitConverter.ToInt32(header, 0);
+            if (contentLength < 0 || contentLength > MaxFrameSize)
+                throw new InvalidDataException($"Invalid frame length: {contentLength}");
             var content = new byte[contentLength];
             ReadExactly(stream, content, contentLength);
             return content;
@@ -37,6 +40,8 @@ namespace Netler
             await ReadExactlyAsync(stream, header, HeaderSize, cancellationToken);
             Array.Reverse(header);
             var contentLength = BitConverter.ToInt32(header, 0);
+            if (contentLength < 0 || contentLength > MaxFrameSize)
+                throw new InvalidDataException($"Invalid frame length: {contentLength}");
             var content = new byte[contentLength];
             await ReadExactlyAsync(stream, content, contentLength, cancellationToken);
             return content;

@@ -87,6 +87,7 @@ namespace Netler
         /// </example>
         public Task<Server> Start(CancellationToken cancellationToken = default)
         {
+            _cancellationSource?.Dispose();
             _cancellationSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             return Task.Run(() => StartServerAsync(_cancellationSource.Token), _cancellationSource.Token);
         }
@@ -106,7 +107,8 @@ namespace Netler
         /// </example>
         public Server Stop()
         {
-            _cancellationSource?.Cancel();
+            try { _cancellationSource?.Cancel(); }
+            catch (ObjectDisposedException) { }
             return this;
         }
 
@@ -119,86 +121,93 @@ namespace Netler
 
             var listener = new TcpListener(IPAddress.Loopback, port);
             listener.Start();
-
-            LogListening(logger, port);
-
-            if (clientPid != null)
-            {
-                StartCheckingIfClientIsAlive(
-                    (int)clientPid,
-                    (ClientDisconnectBehaviour)_configuration.GetClientDisconnectBehaviour(),
-                    ct,
-                    logger);
-            }
-
-            TcpClient tcpClient;
             try
             {
-#if NET8_0_OR_GREATER
-                tcpClient = await listener.AcceptTcpClientAsync(ct).ConfigureAwait(false);
-#else
-                // Optimization: dispose the registration once AcceptTcpClientAsync returns
-                // so the CT callback cannot fire after the listener is already in use.
-                using var registration = ct.Register(() => listener.Stop());
-                tcpClient = await listener.AcceptTcpClientAsync().ConfigureAwait(false);
-#endif
-            }
-            catch (SocketException) when (ct.IsCancellationRequested)
-            {
-                LogStoppedBeforeConnect(logger);
-                return this;
-            }
-            catch (OperationCanceledException) when (ct.IsCancellationRequested)
-            {
-                LogStoppedBeforeConnect(logger);
-                return this;
-            }
+                LogListening(logger, port);
 
-            LogClientConnected(logger);
+                if (clientPid != null)
+                {
+                    StartCheckingIfClientIsAlive(
+                        (int)clientPid,
+                        (ClientDisconnectBehaviour)_configuration.GetClientDisconnectBehaviour(),
+                        ct,
+                        logger);
+                }
 
-            using var client = tcpClient;
-            var stream = client.GetStream();
-
-            while (!ct.IsCancellationRequested)
-            {
+                TcpClient tcpClient;
                 try
                 {
-                    var encodedRequest = await stream.ReadWithHeaderAsync(ct).ConfigureAwait(false);
-                    var request = Request.Decode(encodedRequest);
+#if NET8_0_OR_GREATER
+                    tcpClient = await listener.AcceptTcpClientAsync(ct).ConfigureAwait(false);
+#else
+                    // Optimization: dispose the registration once AcceptTcpClientAsync returns
+                    // so the CT callback cannot fire after the listener is already in use.
+                    using var registration = ct.Register(() => listener.Stop());
+                    tcpClient = await listener.AcceptTcpClientAsync().ConfigureAwait(false);
+#endif
+                }
+                catch (SocketException) when (ct.IsCancellationRequested)
+                {
+                    LogStoppedBeforeConnect(logger);
+                    return this;
+                }
+                catch (OperationCanceledException) when (ct.IsCancellationRequested)
+                {
+                    LogStoppedBeforeConnect(logger);
+                    return this;
+                }
 
-                    LogRequest(logger, request.Route);
+                LogClientConnected(logger);
 
+                using var client = tcpClient;
+                var stream = client.GetStream();
+
+                while (!ct.IsCancellationRequested)
+                {
                     try
                     {
-                        var methodResponse = routes.Invoke(request.Route, request.Parameters);
-                        var response = new Response(Response.Code.Ok, methodResponse);
-                        await stream.WriteWithHeaderAsync(response.Encode(), ct).ConfigureAwait(false);
-                    }
-                    catch (RouteMethodCallFailed ex)
-                    {
-                        LogRouteError(logger, ex, request.Route);
-                        var response = new Response(Response.Code.Error, ex.InnerException.Message);
-                        await stream.WriteWithHeaderAsync(response.Encode(), ct).ConfigureAwait(false);
-                    }
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
-                }
-                catch (System.IO.EndOfStreamException)
-                {
-                    // Client closed the connection
-                    break;
-                }
-                catch (Exception ex) when (!ct.IsCancellationRequested)
-                {
-                    LogUnexpectedError(logger, ex);
-                    break;
-                }
-            }
+                        var encodedRequest = await stream.ReadWithHeaderAsync(ct).ConfigureAwait(false);
+                        var request = Request.Decode(encodedRequest);
 
-            LogServerStopped(logger);
-            return this;
+                        LogRequest(logger, request.Route);
+
+                        try
+                        {
+                            var methodResponse = routes.Invoke(request.Route, request.Parameters);
+                            var response = new Response(Response.Code.Ok, methodResponse);
+                            await stream.WriteWithHeaderAsync(response.Encode(), ct).ConfigureAwait(false);
+                        }
+                        catch (RouteMethodCallFailed ex)
+                        {
+                            LogRouteError(logger, ex, request.Route);
+                            var response = new Response(Response.Code.Error, ex.InnerException.Message);
+                            await stream.WriteWithHeaderAsync(response.Encode(), ct).ConfigureAwait(false);
+                        }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        break;
+                    }
+                    catch (System.IO.EndOfStreamException)
+                    {
+                        // Client closed the connection
+                        break;
+                    }
+                    catch (Exception ex) when (!ct.IsCancellationRequested)
+                    {
+                        LogUnexpectedError(logger, ex);
+                        break;
+                    }
+                }
+
+                LogServerStopped(logger);
+                return this;
+            }
+            finally
+            {
+                listener.Stop();
+                _cancellationSource?.Dispose();
+            }
         }
 
         private void StartCheckingIfClientIsAlive(int clientPid, ClientDisconnectBehaviour behaviour, CancellationToken ct, ILogger logger)

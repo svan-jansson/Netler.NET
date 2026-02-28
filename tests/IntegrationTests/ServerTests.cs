@@ -123,8 +123,8 @@ namespace IntegrationTests
                 });
 
 
-            var firstExected = 5;
-            var secondExected = 37;
+            var firstExpected = 5;
+            var secondExpected = 37;
             int? firstActual = null;
             int? secondActual = null;
 
@@ -141,8 +141,8 @@ namespace IntegrationTests
 
             await Task.WhenAll(serverTask, clientTask);
 
-            Assert.Equal(firstExected, firstActual);
-            Assert.Equal(secondExected, secondActual);
+            Assert.Equal(firstExpected, firstActual);
+            Assert.Equal(secondExpected, secondActual);
         }
 
         [Fact]
