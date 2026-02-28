@@ -77,7 +77,7 @@ namespace Netler
             TcpClient tcpClient;
             try
             {
-#if NET6_0_OR_GREATER
+#if NET8_0_OR_GREATER
                 tcpClient = await listener.AcceptTcpClientAsync(ct).ConfigureAwait(false);
 #else
                 // Optimization: dispose the registration once AcceptTcpClientAsync returns
