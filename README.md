@@ -2,7 +2,7 @@
     <img src="logo/netler.svg" alt="netler logo" height="150px">
 </p>
 
-[![Build Status](https://travis-ci.com/svan-jansson/Netler.NET.svg?branch=master)](https://travis-ci.com/svan-jansson/Netler.NET)
+[![Build Status](https://github.com/svan-jansson/Netler.NET/actions/workflows/build-test-publish.yml/badge.svg)](https://github.com/svan-jansson/Netler.NET/actions/workflows/build-test-publish.yml)
 [![NuGet](https://img.shields.io/nuget/v/Netler.NET.svg?style=flat)](https://www.nuget.org/packages/Netler.NET)
 
 # Netler.NET
